@@ -135,6 +135,7 @@ pub struct Uniforms {
     world: Mat4,
     view: Mat4,
     proj: Mat4,
+    time: f32
 }
 
 #[repr(C)]
@@ -188,7 +189,7 @@ fn model(app: &App) -> Model {
         usage: index_usage,
     });
 
-    let sphere = make_geodesic_isocahedron(10);
+    let sphere = make_geodesic_isocahedron(50);
     println!("Number of points on the sphere: {}", sphere.len());
 
     // Create the depth texture.
@@ -196,7 +197,7 @@ fn model(app: &App) -> Model {
     let depth_texture_view = depth_texture.view().build();
 
     // Create the uniform buffer.
-    let uniforms = create_uniforms(0.0, [win_w, win_h]);
+    let uniforms = create_uniforms(0.0, [win_w, win_h], 0.0);
     let uniforms_bytes = uniforms_as_bytes(&uniforms);
     let usage = wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST;
     let uniform_buffer = device.create_buffer_init(&BufferInitDescriptor {
@@ -330,7 +331,7 @@ fn view(app: &App, model: &Model, frame: Frame) {
 
     // Update the uniforms (rotate around the teapot).
     let world_rotation = 0.05f32 * app.time;
-    let uniforms = create_uniforms(world_rotation, frame_size);
+    let uniforms = create_uniforms(world_rotation, frame_size, app.time);
     let uniforms_size = std::mem::size_of::<Uniforms>() as wgpu::BufferAddress;
     let uniforms_bytes = uniforms_as_bytes(&uniforms);
     let usage = wgpu::BufferUsages::COPY_SRC;
@@ -359,7 +360,7 @@ fn view(app: &App, model: &Model, frame: Frame) {
     render_pass.draw_indexed(index_range, start_vertex, instance_range);
 }
 
-fn create_uniforms(world_rotation: f32, [w, h]: [u32; 2]) -> Uniforms {
+fn create_uniforms(world_rotation: f32, [w, h]: [u32; 2], time: f32) -> Uniforms {
     let world_rotation = Mat4::from_rotation_y(world_rotation);
     let aspect_ratio = w as f32 / h as f32;
     let fov_y = std::f32::consts::FRAC_PI_2;
@@ -375,6 +376,7 @@ fn create_uniforms(world_rotation: f32, [w, h]: [u32; 2]) -> Uniforms {
         world: world_rotation,
         view: (view * world_scale).into(),
         proj: proj.into(),
+        time: time
     }
 }
 
@@ -394,7 +396,7 @@ fn create_depth_texture(
 
 fn create_bind_group_layout(device: &wgpu::Device) -> wgpu::BindGroupLayout {
     wgpu::BindGroupLayoutBuilder::new()
-        .uniform_buffer(wgpu::ShaderStages::VERTEX, false)
+        .uniform_buffer(wgpu::ShaderStages::VERTEX_FRAGMENT, false)
         .build(device)
 }
 
