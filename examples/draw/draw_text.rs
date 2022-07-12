@@ -2,7 +2,7 @@
 //!
 //! If you're looking for more control over the text path, checkout `simple_text_path.rs`.
 
-use nannou::prelude::*;
+use nannou::{prelude::*};
 
 fn main() {
     nannou::sketch(view).run()
@@ -21,11 +21,19 @@ fn view(app: &App, frame: Frame) {
     //                         L     o     r     e     m           i    p    s    u    m
     let glyph_colors = vec![BLUE, BLUE, BLUE, BLUE, BLUE, BLACK, RED, RED, RED, RED, RED];
 
+    let rad = 300.0;
+    let t = app.time;
+    let bounds_rect = win_rect.wh() - vec2(rad, 0.0) + vec2(t.sin()*rad, t.cos()*0.0);
+
+    draw.quad().wh(bounds_rect).color(RED);
+
     draw.text(text)
         .color(BLACK)
         .glyph_colors(glyph_colors)
         .font_size(24)
-        .wh(win_rect.wh());
+        .wh(bounds_rect);
+    
+    
 
     draw.to_frame(app, &frame).unwrap();
 }
